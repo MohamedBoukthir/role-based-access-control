@@ -2,8 +2,12 @@ const express = require('express')
 const morgan = require('morgan')
 const mongoose = require ('mongoose')
 const createHttpErrors = require('http-errors')
+const session = require('express-session')
+const connectFlash = require('connect-flash')
 
-//config
+
+
+//Initial..
 require('dotenv').config()
 const app = express()
 app.use(morgan('dev'))
