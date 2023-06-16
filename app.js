@@ -4,7 +4,7 @@ const mongoose = require ('mongoose')
 const createHttpErrors = require('http-errors')
 const session = require('express-session')
 const connectFlash = require('connect-flash')
-
+const passport = require('passport')
 
 
 //Initial..
@@ -27,8 +27,20 @@ app.use(
             httpOnly: true
         }
     })
-),
+);
 
+
+//passport auth
+app.use(passport.initialize())
+app.use(passport.session())
+require('./utils/passport.auth')
+
+app.use((req , res , next) => {
+    res.locals.user = req.user
+    next();
+})
+
+//connect Flash
 app.use(connectFlash())
 app.use((req , res , next) => {
     res.locals.messages = req.flash()
@@ -37,7 +49,7 @@ app.use((req , res , next) => {
 
 //routes
 app.use('/' , require('./routes/route'));
-app.use('/user' , require('./routes/user'));
+app.use('/user' , ensureAuthenticated , require('./routes/user'));
 app.use('/auth' , require('./routes/auth'));
 
 
@@ -69,3 +81,15 @@ mongoose.connect(process.env.MONGO_URI , {
 app.listen(PORT , () =>   
         console.log(`app listen on ${PORT}`)
         );
+
+
+
+
+
+ function ensureAuthenticated(req, res, next) {
+   if (req.isAuthenticated()) {
+     next();
+   } else {
+     res.redirect('/auth/login');
+   }
+}

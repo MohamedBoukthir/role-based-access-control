@@ -1,20 +1,30 @@
 const router = require('express').Router()
 const { body , validationResult } = require('express-validator')
 const User = require('../models/user')
+const passport = require('passport')
 
-router.get('/login' , async (req , res , next ) => {
+
+router.get('/login' , ensureNOTAuthenticated , async (req , res , next ) => {
     res.render('Login')
 });
 
-router.post('/login' , async (req , res , next ) => {
-    res.send('Login post')
-});
 
-router.get('/register' , async (req , res , next ) => {
+router.post('/login' , ensureNOTAuthenticated,
+                passport.authenticate ('local', {
+                successRedirect : "/user/profile",
+                failureRedirect: "/auth/login",
+                failureFlash: true,
+})
+);
+
+
+router.get('/register' , ensureNOTAuthenticated , async (req , res , next ) => {
     res.render('Register')
 });
 
-router.post('/register' , [
+
+router.post('/register' , ensureNOTAuthenticated,
+[
 
     body('email')
         .trim()
@@ -65,9 +75,29 @@ router.post('/register' , [
         }
 });
 
-router.get('/logout' , async (req , res , next ) => {
-    res.send('Logout')
-});
+router.get('/logout', ensureAuthenticated , function(req, res, next) {
+    req.logout(function(err) {
+      if (err) { return next(err); }
+      res.redirect('/');
+    });
+  });
 
 
 module.exports = router
+
+
+function ensureAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+      next();
+    } else {
+      res.redirect('/auth/login');
+    }
+ }
+
+ function ensureNOTAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+        res.redirect('back')
+    } else {
+        next();
+    }
+ }
